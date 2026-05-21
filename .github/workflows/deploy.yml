@@ -37,6 +37,10 @@ jobs:
       NETWORK: authentik_network
       HOST_PORT: "8090"
       DATA_DIR: /mnt/user/appdata/veckansvader-data
+      # Run JavaScript actions (actions/checkout, etc.) under Node.js 24
+      # instead of the default Node.js 20. GitHub deprecated Node 20 in
+      # autumn 2025 and forces this from June 2nd 2026 — opting in now.
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout repository
