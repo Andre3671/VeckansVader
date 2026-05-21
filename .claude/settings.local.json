@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:opendata.smhi.se)",
+      "WebFetch(domain:opendatadocs.dmi.govcloud.dk)",
+      "WebFetch(domain:www.dmi.dk)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(curl:*)",
+      "Bash(do:*)",
+      "Bash(node -e ' *)",
+      "Bash(grep -oE '/backend-weatherpage[^\"'\"'\"' \\),`}]+')",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\); console.log\\('location:', JSON.stringify\\(d.location\\)\\); console.log\\('weights:', JSON.stringify\\(d.weights\\)\\); console.log\\('days:', d.forecast?.length\\);\")",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\); console.log\\('location:', JSON.stringify\\(d.location\\)\\); console.log\\('weights:', JSON.stringify\\(d.weights\\)\\); console.log\\('days:', d.forecast?.length, 'day0:', d.forecast?.[0]?.date, d.forecast?.[0]?.temperature\\);\")",
+      "Bash(node -e \"console.log\\(JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\)\\)\")",
+      "Bash(docker build *)",
+      "Bash(docker rm *)",
+      "Bash(docker run *)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "PowerShell(\"node processes stopped\")",
+      "Bash(npx cap *)",
+      "Bash(npm uninstall *)",
+      "Bash(node -e \"const s=require\\('sharp'\\);s\\('C:/Users/babyb/Desktop/Projekt/WeatherCompare/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png'\\).metadata\\(\\).then\\(m=>console.log\\('xxxhdpi:',m.width+'x'+m.height,'size',Math.round\\(m.size/1024\\)+'kb'\\)\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+  --bg-from: #f0f7ff;
+  --bg-to: #fef3f2;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --ink: #0f172a;
+  --ink-muted: #64748b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-from: #0b1226;
+    --bg-to: #1a1430;
+    --card: #0f172a;
+    --card-border: #1e293b;
+    --ink: #f1f5f9;
+    --ink-muted: #94a3b8;
+  }
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  /* Default canvas — overridden by the time-of-day class set on <body>. */
+  background:
+    radial-gradient(80% 60% at 20% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+    radial-gradient(70% 50% at 100% 0%, rgba(244, 114, 182, 0.10) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-from) 0%, var(--bg-to) 100%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Inter", sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  transition: background 1.2s ease;
+}
+
+/*
+ * Time-of-day backgrounds. Applied to <body> by the TimeOfDayProvider client
+ * component. Each gradient evokes the sky at that hour — warm pinks for
+ * sunrise/sunset, deep blues for night, bright cyans during the day.
+ *
+ * `background-attachment: fixed` on every variant — the `background` shorthand
+ * resets it to `scroll`, which made the gradient scroll with the page and
+ * reveal blank space (or a different colour) when the content was taller
+ * than the viewport.
+ */
+.tod-dawn,
+.tod-morning,
+.tod-day,
+.tod-dusk,
+.tod-night {
+  background-attachment: fixed;
+  background-color: var(--bg-from);
+}
+
+.tod-dawn {
+  background-image:
+    radial-gradient(80% 60% at 30% 0%, rgba(255, 200, 180, 0.45) 0%, transparent 60%),
+    radial-gradient(70% 50% at 80% 100%, rgba(244, 114, 182, 0.25) 0%, transparent 60%),
+    linear-gradient(180deg, #5a3a6b 0%, #c97a8e 45%, #ffd6a5 100%);
+}
+.tod-morning {
+  background-image:
+    radial-gradient(80% 60% at 50% 0%, rgba(255, 255, 255, 0.4) 0%, transparent 60%),
+    linear-gradient(180deg, #87ceeb 0%, #c8e6f5 60%, #f0f9ff 100%);
+}
+.tod-day {
+  background-image:
+    radial-gradient(80% 60% at 50% 0%, rgba(255, 255, 255, 0.5) 0%, transparent 60%),
+    linear-gradient(180deg, #4a90e2 0%, #87ceeb 60%, #d4eaff 100%);
+}
+.tod-dusk {
+  background-image:
+    radial-gradient(80% 60% at 70% 10%, rgba(255, 170, 100, 0.35) 0%, transparent 60%),
+    radial-gradient(70% 50% at 20% 100%, rgba(91, 62, 117, 0.4) 0%, transparent 60%),
+    linear-gradient(180deg, #6b4c8b 0%, #d9617c 50%, #ffb78a 100%);
+}
+.tod-night {
+  background-image:
+    radial-gradient(80% 60% at 30% 0%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
+    radial-gradient(70% 50% at 80% 100%, rgba(56, 32, 130, 0.4) 0%, transparent 60%),
+    linear-gradient(180deg, #06091a 0%, #0f1335 60%, #1c1845 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tod-dawn {
+    background-image:
+      radial-gradient(80% 60% at 30% 0%, rgba(255, 130, 110, 0.18) 0%, transparent 60%),
+      linear-gradient(180deg, #1a0f24 0%, #3a1a2e 55%, #4a2a1a 100%);
+  }
+  .tod-morning {
+    background-image:
+      radial-gradient(80% 60% at 50% 0%, rgba(180, 220, 255, 0.12) 0%, transparent 60%),
+      linear-gradient(180deg, #0b1a2c 0%, #15293f 60%, #1f3a52 100%);
+  }
+  .tod-day {
+    background-image:
+      radial-gradient(80% 60% at 50% 0%, rgba(180, 220, 255, 0.18) 0%, transparent 60%),
+      linear-gradient(180deg, #0b1d3a 0%, #1a3253 60%, #2a4a72 100%);
+  }
+  .tod-dusk {
+    background-image:
+      radial-gradient(80% 60% at 70% 10%, rgba(244, 114, 60, 0.18) 0%, transparent 60%),
+      linear-gradient(180deg, #1f0e1d 0%, #3a1430 50%, #4d251a 100%);
+  }
+  .tod-night {
+    background-image:
+      radial-gradient(80% 60% at 30% 0%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
+      linear-gradient(180deg, #03050f 0%, #0a0e25 60%, #14143a 100%);
+  }
+}
+
+/* Condition-specific card gradients */
+.cond-clear         { background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); }
+.cond-partly-cloudy { background: linear-gradient(135deg, #f0f9ff 0%, #fef3c7 100%); }
+.cond-cloudy        { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
+.cond-fog           { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+.cond-rain-light    { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
+.cond-rain          { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
+.cond-rain-heavy    { background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%); }
+.cond-snow          { background: linear-gradient(135deg, #f8fafc 0%, #dbeafe 100%); }
+.cond-sleet         { background: linear-gradient(135deg, #e0f2fe 0%, #c7d2fe 100%); }
+.cond-thunder       { background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); }
+.cond-unknown       { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
+
+@media (prefers-color-scheme: dark) {
+  .cond-clear         { background: linear-gradient(135deg, #422006 0%, #1e293b 100%); }
+  .cond-partly-cloudy { background: linear-gradient(135deg, #1e3a8a22 0%, #422006 100%); }
+  .cond-cloudy        { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+  .cond-fog           { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+  .cond-rain-light    { background: linear-gradient(135deg, #172554 0%, #1e293b 100%); }
+  .cond-rain          { background: linear-gradient(135deg, #172554 0%, #0c1e3d 100%); }
+  .cond-rain-heavy    { background: linear-gradient(135deg, #0c1e3d 0%, #050d24 100%); }
+  .cond-snow          { background: linear-gradient(135deg, #1e293b 0%, #172554 100%); }
+  .cond-sleet         { background: linear-gradient(135deg, #1e3a8a22 0%, #1e1b4b 100%); }
+  .cond-thunder       { background: linear-gradient(135deg, #2e1065 0%, #1e1b4b 100%); }
+  .cond-unknown       { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+}
+
+/* Custom scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+}
+
+/* Smooth fade-in for forecast cards */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.4s ease-out both;
+}

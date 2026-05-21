@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Foreground for the Android adaptive icon (and the regular launcher icon).
+  Drawn on a 1024×1024 canvas. Adaptive icon "safe zone" is the centre 66%
+  (~676px). Keep important content inside that box.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Sun: warm radial gradient -->
+    <radialGradient id="sun" cx="0.4" cy="0.4" r="0.6">
+      <stop offset="0%"   stop-color="#fef3c7"/>
+      <stop offset="45%"  stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </radialGradient>
+
+    <!-- Cloud: subtle vertical fade so it doesn't look flat -->
+    <linearGradient id="cloud" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+
+    <!-- Soft drop shadow under the cloud -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="18"/>
+      <feOffset dx="0" dy="20" result="b"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.30"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Big bold sun, peeking from upper-right -->
+  <circle cx="680" cy="370" r="200" fill="url(#sun)" filter="url(#shadow)"/>
+
+  <!--
+    Cloud silhouette. Single path so the shape stays crisp.
+    Built from four overlapping circular bumps + a flat bottom,
+    sized to dominate the centre of the icon.
+  -->
+  <g filter="url(#shadow)">
+    <path d="
+      M 290 720
+      C 188 720 124 645 124 555
+      C 124 470 192 405 280 405
+      C 296 405 311 407 326 411
+      C 354 318 442 252 545 252
+      C 666 252 765 343 779 461
+      C 793 459 807 458 821 458
+      C 905 458 968 521 968 600
+      C 968 678 905 740 821 740
+      Z" fill="url(#cloud)"/>
+  </g>
+</svg>

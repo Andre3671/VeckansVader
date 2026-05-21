@@ -1,0 +1,25 @@
+services:
+  veckansvader:
+    build: .
+    image: veckansvader:latest
+    container_name: veckansvader
+    restart: unless-stopped
+    # Expose to the host on port 3000 — let NginxProxyManager (or SWAG) on
+    # the same Docker network handle SSL + the public 80/443 ports.
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Trust the proxy's X-Forwarded-* headers so rate limiting uses the
+      # real client IP, not the NPM container's IP.
+      - HOSTNAME=0.0.0.0
+    networks:
+      - proxy
+
+networks:
+  # Use an existing external network shared with NginxProxyManager.
+  # Create it once on the host with:
+  #   docker network create proxy
+  proxy:
+    external: true
