@@ -1,0 +1,54 @@
+name: CodeQL
+
+# GitHub's native code-scanning. Catches common JS/TS bugs (XSS, prototype
+# pollution, unsafe regex, hard-coded secrets, etc.) and surfaces them
+# under the Security tab.
+#
+# Free for public repositories. Runs on GitHub-hosted runners so the
+# Unraid runner stays available for deploys.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "resources/**"
+      - "android/**"
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly catch-up scan on Mondays at 04:30 UTC.
+    - cron: "30 4 * * 1"
+
+# Cancel an in-progress scan when a new commit lands on the same branch.
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # Use the security-extended query suite — slightly slower but
+          # catches more real-world issues than the default.
+          queries: security-extended
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
