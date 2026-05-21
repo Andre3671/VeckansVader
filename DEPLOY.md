@@ -3,9 +3,37 @@
 Veckans Väder körs som en enda Docker-container (Node 22 alpine, ~285 MB
 färdigbyggd). En reverse proxy framför containern sköter SSL + 80/443.
 
-## TL;DR — `npm run deploy`
+## TL;DR — automatiskt via GitHub Actions
 
-Allt i ett kommando från Windows:
+`git push` till `main` triggar deploy automatiskt. Workflowen
+(`.github/workflows/deploy.yml`) kör på den självhostade runnern
+**VeckansVaderRunner** på Unraid och gör:
+
+1. Checkout av repot
+2. Stoppar gamla containern, bygger ny image
+3. Startar containern (med persistent volume för besökar-räknaren)
+4. Väntar tills servern svarar (max 30s)
+5. Kör smoke-tester mot `/api/estimate`, `/vader/stockholm`, `/sitemap.xml`, `/robots.txt`
+6. Prunar dangling images så disken inte fylls
+
+Du kan också trigga manuellt: GitHub → **Actions** → "Deploy" → **Run workflow**.
+
+Konfig ligger som env-variabler överst i workflowen (`HOST_PORT`, `NETWORK`,
+`DATA_DIR`). Ändra dem om något flyttar sig.
+
+### Förutsättningar för att CI ska funka
+
+- Runnern **VeckansVaderRunner** måste vara igång på Unraid
+- Runner-användaren måste vara i `docker`-gruppen (kolla med `docker ps` som
+  den användaren)
+- Docker-nätverket `authentik_network` måste finnas (`docker network ls`)
+
+---
+
+## TL;DR — manuellt med `npm run deploy`
+
+För när du inte vill committa, eller om GitHub Actions är nere. Allt i ett
+kommando från Windows:
 
 ```powershell
 npm run deploy
@@ -16,10 +44,10 @@ Scriptet (`scripts/deploy.ps1`) gör:
 2. Rensar `node_modules`, `.next`, `out`, build-artefakter
 3. SCPar projektet + dot-filer till Unraid
 4. Stoppar gammal container, bygger ny image, startar
-5. Kör smoke-tester mot `/api/estimate`, `/vader/stockholm`, `/sitemap.xml`, `/robots.txt`
+5. Kör smoke-tester
 
 Varianter:
-- `npm run deploy:fast` — hoppar över clean (snabbare nästa cykel)
+- `npm run deploy:fast` — hoppar över clean
 - `pwsh scripts/deploy.ps1 -SkipBuild` — bara starta om container utan rebuild
 
 Editera **`scripts/deploy.ps1`** överst om Unraid-IP, port eller nätverk

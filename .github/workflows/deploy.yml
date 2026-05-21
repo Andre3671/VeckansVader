@@ -1,0 +1,107 @@
+name: Deploy
+
+# Runs on the self-hosted Unraid runner (VeckansVaderRunner) so we can build
+# the Docker image and restart the container without any external services.
+#
+# Triggers:
+#   - Push to main → automatic deploy
+#   - Manual trigger from the Actions tab → "Run workflow"
+
+on:
+  push:
+    branches: [main]
+    # Skip when only docs / app files change (saves cycles).
+    paths-ignore:
+      - "**.md"
+      - "android/**"
+      - "resources/**"
+      - "scripts/build-icons.js"
+  workflow_dispatch:
+
+# Only one deploy at a time. If a second push lands mid-deploy, queue it.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, VeckansVaderRunner]
+    timeout-minutes: 15
+
+    env:
+      CONTAINER_NAME: veckansvader
+      IMAGE_TAG: veckansvader:latest
+      NETWORK: authentik_network
+      HOST_PORT: "8090"
+      DATA_DIR: /mnt/user/appdata/veckansvader-data
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Stop existing container
+        run: |
+          docker stop "$CONTAINER_NAME" 2>/dev/null || true
+          docker rm   "$CONTAINER_NAME" 2>/dev/null || true
+
+      - name: Build Docker image
+        run: docker build -t "$IMAGE_TAG" .
+
+      - name: Ensure persistent data directory exists
+        run: mkdir -p "$DATA_DIR"
+
+      - name: Start new container
+        run: |
+          docker run -d \
+            --name "$CONTAINER_NAME" \
+            --restart unless-stopped \
+            --network "$NETWORK" \
+            -p "$HOST_PORT":3000 \
+            -e NODE_ENV=production \
+            -e VISITOR_DATA_DIR=/app/data \
+            -v "$DATA_DIR":/app/data \
+            "$IMAGE_TAG"
+
+      - name: Wait for the server to bind
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS "http://localhost:$HOST_PORT/" -o /dev/null; then
+              echo "server up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Server did not respond on port $HOST_PORT within 30s"
+          docker logs "$CONTAINER_NAME" --tail 100
+          exit 1
+
+      - name: Smoke tests
+        run: |
+          set -e
+          fail=0
+          for path in \
+            "/api/estimate?place=Stockholm" \
+            "/vader/stockholm" \
+            "/vader" \
+            "/sitemap.xml" \
+            "/robots.txt"
+          do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$HOST_PORT$path")
+            if [[ "$code" == 2* ]]; then
+              echo "  [ok]   $path -> $code"
+            else
+              echo "  [FAIL] $path -> $code"
+              fail=1
+            fi
+          done
+          if [[ $fail -ne 0 ]]; then
+            echo "::error::One or more smoke tests failed"
+            docker logs "$CONTAINER_NAME" --tail 100
+            exit 1
+          fi
+
+      - name: Prune dangling images
+        # Drop the previous image layers so the host disk doesn't fill up
+        # after a long sequence of deploys.
+        if: always()
+        run: docker image prune -f
