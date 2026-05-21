@@ -93,7 +93,7 @@ jobs:
             "/sitemap.xml" \
             "/robots.txt"
           do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$HOST_PORT$path")
+            code=$(curl -s -o /dev/null -w "%{http_code}" "https://www.veckansvader.se$path")
             if [[ "$code" == 2* ]]; then
               echo "  [ok]   $path -> $code"
             else
