@@ -25,7 +25,10 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, VeckansVaderRunner]
+    # Targets the Unraid runner (label `unraid` is set on the runner itself
+    # via the GitHub Runners settings). `self-hosted` is implied — the
+    # runner already has it.
+    runs-on: [self-hosted, unraid]
     timeout-minutes: 15
 
     env:
