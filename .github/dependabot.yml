@@ -22,11 +22,21 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Skip the @capacitor/* packages — they need to be bumped together
-    # with @capacitor/cli and the Android project, which we handle
-    # manually when we want to upgrade Capacitor itself.
+    # Skip major bumps for packages where major versions tend to be
+    # full-rewrite events that need manual planning + code changes.
+    # Dependabot still opens PRs for minor/patch on these.
     ignore:
       - dependency-name: "@capacitor/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "deps"
