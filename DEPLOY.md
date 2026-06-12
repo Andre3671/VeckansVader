@@ -107,6 +107,7 @@ docker run -d \
   --name veckansvader \
   --restart unless-stopped \
   --network authentik_network \
+  --dns 1.1.1.1 --dns 8.8.8.8 \
   -p 8090:3000 \
   -e NODE_ENV=production \
   -e VISITOR_DATA_DIR=/app/data \
@@ -242,6 +243,16 @@ Vanligaste orsaken: ISP blockerar inkommande 443. Använd Cloudflare Tunnel.
 utfärdat ännu (kolla NPM → SSL Certificates → status ska vara "In Use", inte
 "Pending"). Vänta 1–2 min och retry.
 
+**`Open-Meteo: fetch failed ← ... EAI_AGAIN` (eller annan provider):**
+Containern kan inte slå upp DNS för en extern host (Open-Meteo ligger på
+Hetzner; SMHI/DMI på andra nät så de kan funka medan Open-Meteo failar).
+`docker run` ska ha `--dns 1.1.1.1 --dns 8.8.8.8` så att Dockers inbyggda
+resolver på `authentik_network` får pålitliga uppströms-servrar. Verifiera
+inifrån containern:
+```bash
+docker exec veckansvader node -e "fetch('https://api.open-meteo.com/v1/forecast?latitude=59.33&longitude=18.07&hourly=temperature_2m&forecast_days=1').then(r=>console.log('OK',r.status)).catch(e=>console.log('FAIL',e.cause||e))"
+```
+
 **`Failed to fetch` i Android-appen:** API-routerna saknar CORS-headers.
 `middleware.ts` ska finnas i rotmappen och `capacitor.config.ts` ska ha
 `CapacitorHttp.enabled: true`. Bygg om APK efter ändringar.
@@ -268,7 +279,7 @@ Sen på Unraid:
 ```bash
 docker stop veckansvader && docker rm veckansvader
 docker run -d --name veckansvader --restart unless-stopped \
-  --network authentik_network -p 8090:3000 \
+  --network authentik_network --dns 1.1.1.1 --dns 8.8.8.8 -p 8090:3000 \
   -e NODE_ENV=production veckansvader:latest
 ```
 

@@ -138,6 +138,7 @@ docker run -d \
   --name $ContainerName \
   --restart unless-stopped \
   --network $Network \
+  --dns 1.1.1.1 --dns 8.8.8.8 \
   -p ${HostPort}:3000 \
   -e NODE_ENV=production \
   -e VISITOR_DATA_DIR=/app/data \

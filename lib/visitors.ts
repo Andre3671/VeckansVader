@@ -1,20 +1,21 @@
 /**
- * Tiny "visitors this week" counter.
+ * Persistent unique-visitor counter ("besökare totalt").
  *
- * Stores irreversible per-week fingerprints of caller IPs so we can show a
+ * Stores irreversible fingerprints of caller IPs so we can show an all-time
  * unique-visitor count in the footer without keeping any personally
  * identifiable data:
  *
- *   1. Each ISO week (Mon-Sun) starts with a fresh random salt (32 bytes).
- *   2. Every new visitor's IP is hashed with the week's salt:
+ *   1. A single random salt (32 bytes) is generated once and persisted. It is
+ *      never rotated, so the same IP always maps to the same fingerprint and
+ *      can be deduped across the whole lifetime of the counter.
+ *   2. Every visitor's IP is hashed with the salt:
  *        fingerprint = sha256(ip + salt) truncated to 16 chars
- *   3. The fingerprint goes into the week's Set (dedups same-IP repeat visits).
- *   4. When the ISO week rolls over the salt + Set are wiped — last week's
- *      hashes can never be linked to this week's IPs because the salt is gone.
+ *   3. The fingerprint goes into a Set (dedups repeat visits from the same IP).
+ *   4. The raw IP never touches disk; the salt is secret, so a stored
+ *      fingerprint can't be turned back into an IP.
  *
- * Persisted to disk (debounced) so the count survives container restarts
- * within the same week. If the file is missing or the week doesn't match
- * the current one, we start fresh.
+ * Persisted to disk (debounced) so the count survives container restarts.
+ * The data dir should point at a mounted volume in prod (VISITOR_DATA_DIR).
  */
 
 import crypto from "node:crypto";
@@ -26,13 +27,11 @@ const DATA_DIR = process.env.VISITOR_DATA_DIR ?? "/tmp/veckansvader-stats";
 const FILE = path.join(DATA_DIR, "visitors.json");
 
 interface PersistedState {
-  week: string;          // ISO week id, e.g. "2026-W20"
-  salt: string;          // hex, regenerated each week
-  fingerprints: string[]; // unique hashes seen this week
+  salt: string;           // hex, generated once, never rotated
+  fingerprints: string[]; // unique hashes seen all-time
 }
 
 interface MemoryState {
-  week: string;
   salt: string;
   fingerprints: Set<string>;
 }
@@ -41,31 +40,12 @@ let state: MemoryState | null = null;
 let dirty = false;
 let flushTimer: NodeJS.Timeout | null = null;
 
-/**
- * Returns an ISO week identifier like "2026-W20" for the current UTC date.
- * ISO weeks start on Monday; week 1 is the one containing the first Thursday
- * of the year.
- */
-function currentIsoWeek(): string {
-  const d = new Date(Date.UTC(
-    new Date().getUTCFullYear(),
-    new Date().getUTCMonth(),
-    new Date().getUTCDate(),
-  ));
-  // Shift Sunday=0 → 7, then add days so we land on Thursday of the same week.
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
-}
-
 function freshSalt(): string {
   return crypto.randomBytes(32).toString("hex");
 }
 
-function newWeekState(): MemoryState {
-  return { week: currentIsoWeek(), salt: freshSalt(), fingerprints: new Set() };
+function newState(): MemoryState {
+  return { salt: freshSalt(), fingerprints: new Set() };
 }
 
 function fingerprint(ip: string, salt: string): string {
@@ -75,25 +55,26 @@ function fingerprint(ip: string, salt: string): string {
 async function load(): Promise<void> {
   try {
     const raw = await fs.readFile(FILE, "utf-8");
-    const parsed = JSON.parse(raw) as PersistedState;
-    if (parsed.week === currentIsoWeek() && parsed.salt && Array.isArray(parsed.fingerprints)) {
+    const parsed = JSON.parse(raw) as Partial<PersistedState>;
+    if (parsed.salt && Array.isArray(parsed.fingerprints)) {
       state = {
-        week: parsed.week,
         salt: parsed.salt,
         fingerprints: new Set(parsed.fingerprints),
       };
       return;
     }
   } catch {
-    // File missing or unreadable — fall through.
+    // File missing or unreadable — fall through to a fresh counter.
   }
-  state = newWeekState();
+  state = newState();
+  // Persist the freshly minted salt so it's stable across restarts.
+  dirty = true;
+  scheduleFlush();
 }
 
 async function save(): Promise<void> {
   if (!state) return;
   const out: PersistedState = {
-    week: state.week,
     salt: state.salt,
     fingerprints: [...state.fingerprints],
   };
@@ -118,32 +99,22 @@ function scheduleFlush() {
   flushTimer.unref?.();
 }
 
-function rolloverIfNeeded() {
-  if (state && state.week !== currentIsoWeek()) {
-    state = newWeekState();
-    dirty = true;
-    scheduleFlush();
-  }
-}
-
-/** Mark this IP as a visitor this week and return the week's count so far. */
-export async function trackVisitor(ip: string): Promise<{ thisWeek: number }> {
+/** Mark this IP as a visitor and return the all-time unique count so far. */
+export async function trackVisitor(ip: string): Promise<{ total: number }> {
   if (!state) await load();
-  if (!state) state = newWeekState();
-  rolloverIfNeeded();
+  if (!state) state = newState();
   const fp = fingerprint(ip, state.salt);
   if (!state.fingerprints.has(fp)) {
     state.fingerprints.add(fp);
     dirty = true;
     scheduleFlush();
   }
-  return { thisWeek: state.fingerprints.size };
+  return { total: state.fingerprints.size };
 }
 
-/** Read-only: this week's unique-visitor count. */
-export async function getVisitorCount(): Promise<{ thisWeek: number }> {
+/** Read-only: all-time unique-visitor count. */
+export async function getVisitorCount(): Promise<{ total: number }> {
   if (!state) await load();
-  if (!state) return { thisWeek: 0 };
-  rolloverIfNeeded();
-  return { thisWeek: state.fingerprints.size };
+  if (!state) return { total: 0 };
+  return { total: state.fingerprints.size };
 }

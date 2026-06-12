@@ -6,13 +6,12 @@ export const runtime = "nodejs";
 /**
  * GET /api/stats/visitors
  *
- * Registers the caller as a unique visitor for the current ISO week and
- * returns the running count. Idempotent within a week — same IP repeated
- * doesn't inflate the number.
+ * Registers the caller as a unique visitor and returns the all-time running
+ * count. Idempotent — the same IP repeated doesn't inflate the number.
  *
- * Response: { thisWeek: number }
+ * Response: { total: number }
  *
- * Privacy: only an irreversible per-week hash of the IP is stored, see
+ * Privacy: only an irreversible salted hash of the IP is stored, see
  * lib/visitors.ts.
  */
 export async function GET(req: Request) {

@@ -63,6 +63,7 @@ jobs:
             --name "$CONTAINER_NAME" \
             --restart unless-stopped \
             --network "$NETWORK" \
+            --dns 1.1.1.1 --dns 8.8.8.8 \
             -p "$HOST_PORT":3000 \
             -e NODE_ENV=production \
             -e VISITOR_DATA_DIR=/app/data \
