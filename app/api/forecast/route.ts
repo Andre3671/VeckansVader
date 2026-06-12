@@ -6,6 +6,27 @@ import { compareForecasts } from "@/lib/compare";
 
 export const runtime = "nodejs";
 
+/**
+ * Node's fetch throws a generic "fetch failed" and stashes the real reason
+ * (ENOTFOUND, ETIMEDOUT, ECONNREFUSED, TLS errors…) in `error.cause`. Unwrap
+ * the chain so deploy-time network failures are actually diagnosable.
+ */
+function describeError(err: unknown): string {
+  const parts: string[] = [];
+  let e: unknown = err;
+  for (let i = 0; i < 4 && e != null; i++) {
+    if (e instanceof Error) {
+      const code = (e as { code?: string }).code;
+      parts.push(code ? `${e.message} (${code})` : e.message);
+      e = (e as { cause?: unknown }).cause;
+    } else {
+      parts.push(String(e));
+      break;
+    }
+  }
+  return parts.join(" ← ") || "Unknown error";
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const lat = Number(searchParams.get("lat"));
@@ -35,9 +56,9 @@ export async function GET(req: Request) {
   const dmi = dmiRes.status === "fulfilled" ? dmiRes.value : null;
   const openmeteo = omRes.status === "fulfilled" ? omRes.value : null;
   const errors: { smhi?: string; dmi?: string; openmeteo?: string } = {};
-  if (smhiRes.status === "rejected") errors.smhi = String(smhiRes.reason?.message ?? smhiRes.reason);
-  if (dmiRes.status === "rejected") errors.dmi = String(dmiRes.reason?.message ?? dmiRes.reason);
-  if (omRes.status === "rejected") errors.openmeteo = String(omRes.reason?.message ?? omRes.reason);
+  if (smhiRes.status === "rejected") errors.smhi = describeError(smhiRes.reason);
+  if (dmiRes.status === "rejected") errors.dmi = describeError(dmiRes.reason);
+  if (omRes.status === "rejected") errors.openmeteo = describeError(omRes.reason);
 
   if (!smhi && !dmi && !openmeteo) {
     return NextResponse.json(

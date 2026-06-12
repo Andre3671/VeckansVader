@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(nslookup -type=AAAA geocoding-api.open-meteo.com)",
+      "Bash(nslookup -type=A geocoding-api.open-meteo.com)",
+      "Bash(nslookup -type=AAAA opendata-download-metfcst.smhi.se)",
+      "Bash(nslookup -type=AAAA opendataapi.dmi.dk)",
+      "Bash(nslookup -type=AAAA api.open-meteo.com)",
+      "Bash(nslookup -type=A api.open-meteo.com)"
+    ]
+  }
+}
